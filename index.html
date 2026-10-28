@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PulsePerform Dashboard</title>
+  <script src="https://jsdelivr.net"></script>
+  <script src="https://jsdelivr.net"></script>
+</head>
+<body class="bg-gray-100 font-sans p-6">
+  <div class="max-w-7xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="bg-white p-6 rounded-xl shadow-sm flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">📊 PulsePerform Dashboard</h1>
+        <p class="text-sm text-gray-500">iOMBA Midterm Project - Employee KPI & Performance Tracker</p>
+      </div>
+      <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition text-sm">
+        + Add Employee
+      </button>
+    </div>
+
+    <!-- KPI Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <p class="text-xs font-semibold text-gray-400 uppercase">Total Employees</p>
+        <p id="totalCount" class="text-2xl font-bold text-gray-800 mt-1">0</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <p class="text-xs font-semibold text-gray-400 uppercase">Average Rating</p>
+        <p id="avgRating" class="text-2xl font-bold text-gray-800 mt-1">0.0</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <p class="text-xs font-semibold text-gray-400 uppercase">Avg KPI Progress</p>
+        <p id="avgKpi" class="text-2xl font-bold text-gray-800 mt-1">0%</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <p class="text-xs font-semibold text-gray-400 uppercase">Top Performers</p>
+        <p id="topPerformers" class="text-2xl font-bold text-emerald-600 mt-1">0</p>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-white p-4 rounded-xl shadow-sm">
+        <h3 class="text-sm font-semibold text-gray-700 mb-4">Department Performance Breakdown</h3>
+        <canvas id="barChart" class="max-h-64"></canvas>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm">
+        <h3 class="text-sm font-semibold text-gray-700 mb-4">Rating Distribution Tiers</h3>
+        <canvas id="doughnutChart" class="max-h-64"></canvas>
+      </div>
+    </div>
+
+    <!-- Controls & Data Table -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div class="p-4 border-b border-gray-100 flex flex-col md:flex-row justify-between gap-4">
+        <input type="text" id="searchBar" oninput="renderTable()" placeholder="Search employee name or role..." class="p-2 border rounded-lg text-sm w-full md:w-72 outline-none focus:ring-2 focus:ring-blue-500">
+        <select id="filterDept" onchange="renderTable()" class="p-2 border rounded-lg text-sm outline-none">
+          <option value="All">All Departments</option>
+          <option value="Engineering">Engineering</option>
+          <option value="Sales">Sales</option>
+          <option value="Marketing">Marketing</option>
+          <option value="HR">HR</option>
+        </select>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase">
+              <th class="p-4">Name</th>
+              <th class="p-4">Role</th>
+              <th class="p-4">Department</th>
+              <th class="p-4">Rating</th>
+              <th class="p-4">KPI Progress</th>
+              <th class="p-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="employeeTableBody" class="text-sm text-gray-600 divide-y divide-gray-50">
+            <!-- Dynamic Content -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Modal Interface -->
+  <div id="modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
+      <h2 class="text-lg font-bold text-gray-800">Add New Personnel Record</h2>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Full Name</label>
+          <input type="text" id="empName" class="w-full p-2 border rounded-lg text-sm outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Job Role</label>
+          <input type="text" id="empRole" class="w-full p-2 border rounded-lg text-sm outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Department</label>
+          <select id="empDept" class="w-full p-2 border rounded-lg text-sm outline-none">
+            <option value="Engineering">Engineering</option>
+            <option value="Sales">Sales</option>
+            <option value="Marketing">Marketing</option>
+            <option value="HR">HR</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Rating (1.0 - 5.0)</label>
+            <input type="number" id="empRating" min="1" max="5" step="0.1" value="4.0" class="w-full p-2 border rounded-lg text-sm outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">KPI Completion (%)</label>
+            <input type="number" id="empKpi" min="0" max="100" value="85" class="w-full p-2 border rounded-lg text-sm outline-none">
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal()" class="px-4 py-2 border rounded-lg text-sm text-gray-500 hover:bg-gray-50">Cancel</button>
+        <button onclick="addEmployee()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initial Mock Data Store
+    let initialData = [
+      { id: 1, name: "Anne Subia", role: "Software Engineer", dept: "Engineering", rating: 4.8, kpi: 95 },
+      { id: 2, name: "John Doe", role: "Account Executive", dept: "Sales", rating: 4.2, kpi: 88 },
+      { id: 3, name: "Jane Smith", role: "Growth Specialist", dept: "Marketing", rating: 3.9, kpi: 76 },
+      { id: 4, name: "Alex Chen", role: "HR Manager", dept: "HR", rating: 4.5, kpi: 92 }
+    ];
+
+    if (!localStorage.getItem('employees')) {
+      localStorage.setItem('employees', JSON.stringify(initialData));
+    }
+
+    let barChart, doughnutChart;
+
+    function getEmployees() {
+      return JSON.parse(localStorage.getItem('employees')) || [];
+    }
+
+    function openModal() { document.getElementById('modal').classList.remove('hidden'); }
+    function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+
+    function addEmployee() {
+      const name = document.getElementById('empName').value.trim();
+      const role = document.getElementById('empRole').value.trim();
+      const dept = document.getElementById('empDept').value;
+      const rating = parseFloat(document.getElementById('empRating').value) || 0;
+      const kpi = parseInt(document.getElementById('empKpi').value) || 0;
+
+      if (!name || !role) return alert('Please enter both name and role fields.');
+
+      let currentList = getEmployees();
+      currentList.push({ id: Date.now(), name, role, dept, rating, kpi });
+      localStorage.setItem('employees', JSON.stringify(currentList));
+
+      // Reset modal values
+      document.getElementById('empName').value = '';
+      document.getElementById('empRole').value = '';
+      closeModal();
+      
+      refreshDashboard();
+    }
+
+    function deleteEmployee(id) {
+      let currentList = getEmployees().filter(emp => emp.id !== id);
+      localStorage.setItem('employees', JSON.stringify(currentList));
+      refreshDashboard();
+    }
+
+    function calculateMetrics() {
+      let data = getEmployees();
+      let total = data.length;
+      if (total === 0) {
+        document.getElementById('totalCount').innerText = "0";
+        document.getElementById('avgRating').innerText = "0.0";
+        document.getElementById('avgKpi').innerText = "0%";
+        document.getElementById('topPerformers').innerText = "0";
+        return;
+      }
+
+      let sumRating = data.reduce((sum, item) => sum + item.rating, 0);
+      let sumKpi = data.reduce((sum, item) => sum + item.kpi, 0);
+      let tops = data.filter(item => item.rating >= 4.5).length;
+
+      document.getElementById('totalCount').innerText = total;
+      document.getElementById('avgRating').innerText = (sumRating / total).toFixed(1);
+      document.getElementById('avgKpi').innerText = Math.round(sumKpi / total) + "%";
+      document.getElementById('topPerformers').innerText = tops;
+    }
+
+    function renderTable() {
+      let search = document.getElementById('searchBar').value.toLowerCase();
+      let deptFilter = document.getElementById('filterDept').value;
+      let tbody = document.getElementById('employeeTableBody');
+      tbody.innerHTML = '';
+
+      let filtered = getEmployees().filter(emp => {
+        let matchesSearch = emp.name.toLowerCase().includes(search) || emp.role.toLowerCase().includes(search);
+        let matchesDept = deptFilter === "All" || emp.dept === deptFilter;
+        return matchesSearch && matchesDept;
+      });
+
+      filtered.forEach(emp => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-gray-50/70 transition">
+            <td class="p-4 font-medium text-gray-800">${emp.name}</td>
+            <td class="p-4">${emp.role}</td>
